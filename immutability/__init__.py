@@ -26,6 +26,9 @@ class immutable:
             if base == 'immutable':
                 frame = frame.f_back
                 base = str(frame).split(' ')[-1][0:-1]
+            for key, val in frame.f_globals.items():
+                if key not in globals().keys():
+                    globals()[key] = val
         self.scope = [self.value]
         self.base = base
         for method in dir(value):
