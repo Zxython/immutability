@@ -17,7 +17,6 @@ class immutable:
 
     def __init__(self, value):
         self.value = value
-        self.type = str(type(value)).split("'")[1].split('.')[-1]
         try:
             raise SyntaxError
         except SyntaxError as traceback:
@@ -29,20 +28,25 @@ class immutable:
             for key, val in frame.f_globals.items():
                 if key not in globals().keys():
                     globals()[key] = val
+        self.type = str(type(value)).split("'")[1].split('.')[-1]
         self.scope = [self.value]
         self.base = base
         for method in dir(value):
             try:
-                if method == '__setitem__':
-                    self.__dict__['__setitem'] = self.partial(eval(self.type + '.' + method))
+                if method in ['__setitem__', '__getitem__']:
+                    self.__dict__[method[0:-2]] = self.partial(eval(self.type + '.' + method))
                     continue
                 self.__dict__[method] = self.partial(eval(self.type + '.' + method))
             except AttributeError:
                 self.__dict__[method] = value.__dict__[method]
                 continue
+        self.type = type(value)
 
     def __setitem__(self, key, value):
         self.__dict__['__setitem'](key, value)
+
+    def __getitem__(self, key):
+        return self.__dict__['__getitem'](key)
 
     def __change_scope(self):
         try:
