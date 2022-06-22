@@ -6,5 +6,5 @@ setup(name='immutability',
       author='Jerry Gillian',
       author_email='jerrygillian822@gmail.com',
       license='Free to use',
-      packages=[],
+      packages=['immutability'],
       zip_safe=False)
