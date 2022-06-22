@@ -15,10 +15,10 @@ class immutable:
         newfunc.keywords = keywords
         return newfunc
 
-    def __init__(self, value):
+    def __init__(self, __object):
         from copy import deepcopy
         self.deepcopy = deepcopy
-        self.value = value
+        self.value = __object
         try:
             raise SyntaxError
         except SyntaxError as traceback:
@@ -30,19 +30,19 @@ class immutable:
             for key, val in frame.f_globals.items():
                 if key not in globals().keys():
                     globals()[key] = val
-        self.type = str(type(value)).split("'")[1].split('.')[-1]
+        self.type = str(type(__object)).split("'")[1].split('.')[-1]
         self.scope = [self.value]
         self.base = base
-        for method in dir(value):
+        for method in dir(__object):
             try:
                 if method in ['__setitem__', '__getitem__', '__len__']:
                     self.__dict__[method[0:-2]] = self.partial(eval(self.type + '.' + method))
                     continue
                 self.__dict__[method] = self.partial(eval(self.type + '.' + method))
             except AttributeError:
-                self.__dict__[method] = value.__dict__[method]
+                self.__dict__[method] = __object.__dict__[method]
                 continue
-        self.type = type(value)
+        self.type = type(__object)
 
     def __setitem__(self, key, value):
         self.__change_scope()
