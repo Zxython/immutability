@@ -4,7 +4,7 @@ class immutable:
             newkeywords = {**keywords, **fkeywords}
             self.__change_scope()
             try:
-                newargs = [self.value.copy()]
+                newargs = [self.scope[-1]]
             except AttributeError:
                 newargs = [self.value]
             temp = func(*newargs, *fargs, **newkeywords)
@@ -16,6 +16,8 @@ class immutable:
         return newfunc
 
     def __init__(self, value):
+        from copy import deepcopy
+        self.deepcopy = deepcopy
         self.value = value
         try:
             raise SyntaxError
@@ -43,12 +45,15 @@ class immutable:
         self.type = type(value)
 
     def __setitem__(self, key, value):
+        self.__change_scope()
         self.__dict__['__setitem'](key, value)
 
     def __getitem__(self, key):
+        self.__change_scope()
         return self.__dict__['__getitem'](key)
-    
+
     def __len__(self):
+        self.__change_scope()
         return self.__dict__['__len']()
 
     def __change_scope(self):
@@ -56,13 +61,14 @@ class immutable:
             raise SyntaxError
         except SyntaxError as traceback:
             path = self.get_path(traceback.__traceback__.tb_frame.f_back)
-            while path[0] in ['newfunc', '__setitem__']:
+            while path[0] in ['newfunc', '__setitem__', '__len__', '__getitem__']:
                 path.pop(0)
         if path is None:
             raise NameError("variable is not defined")
         for _ in range(len(self.scope) - len(path)):
             self.value = self.scope.pop(-1)
         for _ in range(len(path) - len(self.scope)):
+            self.scope[-1] = self.deepcopy(self.value)
             self.scope.append(self.value)
 
     @classmethod
@@ -92,4 +98,4 @@ class immutable:
 
     def __str__(self):
         self.__change_scope()
-        return str(self.value)
+        return str(self.scope[-1])
