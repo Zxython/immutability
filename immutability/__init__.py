@@ -33,7 +33,7 @@ class immutable:
         self.base = base
         for method in dir(value):
             try:
-                if method in ['__setitem__', '__getitem__']:
+                if method in ['__setitem__', '__getitem__', '__len__']:
                     self.__dict__[method[0:-2]] = self.partial(eval(self.type + '.' + method))
                     continue
                 self.__dict__[method] = self.partial(eval(self.type + '.' + method))
@@ -47,6 +47,9 @@ class immutable:
 
     def __getitem__(self, key):
         return self.__dict__['__getitem'](key)
+    
+    def __len__(self):
+        return self.__dict__['__len']()
 
     def __change_scope(self):
         try:
