@@ -1,6 +1,6 @@
 from setuptools import setup
 setup(name='immutability',
-      version='0.1',
+      version='0.2.0',
       description='Adds immutability class',
       url='https://github.com/Zxython/immutability/',
       author='Jerry Gillian',
