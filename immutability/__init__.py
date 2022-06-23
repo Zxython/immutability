@@ -21,7 +21,7 @@ class immutable:
         def newfunc(*fargs, **fkeywords):
             newkeywords = {**keywords, **fkeywords}
             self.__change_scope()
-            newargs = [self.scope[-1]]
+            newargs = [self.immutability_scope[-1]]
             temp = func(*newargs, *fargs, **newkeywords)
             return temp
 
@@ -50,18 +50,31 @@ class immutable:
                             val_elements = val_elements[-1].split("'")[0]
                             if val_elements != 'immutable':
                                 globals()[val_elements] = val
-        self.type = str(type(__object)).split("'")[1].split('.')[-1]
-        self.scope = [__object]
-        self.base = base
+        type_variable = type(__object)
+        self.immutability_scope = [__object]
+        self.base_level_variable_thats_so_long_no_one_else_will_use_this_name = base
+        self.failed_inheritance_methods = []
         for method in dir(__object):
             try:
                 if method in self.supported_dunder_methods:
-                    self.__dict__[method[0:-2]] = self.partial(eval(self.type + '.' + method))
+                    self.__dict__[method[0:-2]] = self.partial(type_variable.__dict__[method])
                     continue
-                self.__dict__[method] = self.partial(eval(self.type + '.' + method))
+                self.__dict__[method] = self.partial(type_variable.__dict__[method])
             except AttributeError:
                 self.__dict__[method] = __object.__dict__[method]
-                continue
+            except KeyError:
+                try:
+                    type_name = str(type_variable).split("'")[1].split('.')[-1]
+                    if method in self.supported_dunder_methods:
+                        self.__dict__[method[0:-2]] = self.partial(eval(type_name + '.' + method))
+                        continue
+                    self.__dict__[method] = self.partial(eval(type_name + '.' + method))
+                except AttributeError:
+                    self.__dict__[method] = __object.__dict__[method]
+                except NameError:
+                    self.failed_inheritance_methods.append(method)
+        if len(self.failed_inheritance_methods) == 0:
+            self.failed_inheritance_methods = None
         self.type = type(__object)
 
     def __change_scope(self):
@@ -69,16 +82,16 @@ class immutable:
             raise SyntaxError
         except SyntaxError as traceback:
             path = self.get_path(traceback.__traceback__.tb_frame.f_back)
-            while path[0] == 'newfunc' or path[0] in self.supported_dunder_methods:
-                path.pop(0)
         if path is None:
             raise NameError("variable is not defined")
-        for _ in range(len(self.scope) - len(path)):
-            self.scope.pop(-1)
-        for _ in range(len(path) - len(self.scope)):
-            temp = self.deepcopy(self.scope[-1])
-            self.scope.append(self.scope[-1])
-            self.scope[-1] = temp
+        while path[0] == 'newfunc' or path[0] in self.supported_dunder_methods:
+            path.pop(0)
+        for _ in range(len(self.immutability_scope) - len(path)):
+            self.immutability_scope.pop(-1)
+        for _ in range(len(path) - len(self.immutability_scope)):
+            temp = self.deepcopy(self.immutability_scope[-1])
+            self.immutability_scope.append(self.immutability_scope[-1])
+            self.immutability_scope[-1] = temp
 
     def get_path(self, frame):
         path = []
@@ -90,13 +103,13 @@ class immutable:
             frame = temp
             current_frame = str(frame).split(' ')[-1][0:-1]
             path.append(current_frame)
-            if current_frame == self.base:
+            if current_frame == self.base_level_variable_thats_so_long_no_one_else_will_use_this_name:
                 break
         return path
 
     def __str__(self):
         self.__change_scope()
-        return str(self.scope[-1])
+        return str(self.immutability_scope[-1])
 
     def __setitem__(self, key, value):
         self.__change_scope()
